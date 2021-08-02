@@ -1,6 +1,5 @@
 package com.project.Restaurant.repository;
 
-import com.project.Restaurant.entities.Orders;
 import com.project.Restaurant.utils.FieldValuePair;
 import com.project.Restaurant.utils.SearchCriteria;
 import lombok.extern.slf4j.Slf4j;
@@ -8,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -25,54 +23,6 @@ public class Filters {
     public Filters(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
-    //first filter specific only to Order
-    public List<Orders> orderFilter(SearchCriteria searchCriteria) {
-
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Orders> cq = cb.createQuery(Orders.class);
-        Root<Orders> root = cq.from(Orders.class);
-        List<Predicate> predicateList = new ArrayList<>();
-
-        List<Field> fields = Arrays.asList(Orders.class.getDeclaredFields());
-        log.info("Fields of Orders.class = {}", fields.get(0).getName());
-
-        for (FieldValuePair fieldValuePair : searchCriteria.getFieldValuePair()) {
-            if (isFieldPresent(fields, fieldValuePair.getField())) {
-                log.info("Field {} is present ", fieldValuePair.getField());
-                if (fieldValuePair.getValue().compareToIgnoreCase("false") == 0
-                        || fieldValuePair.getValue().compareToIgnoreCase("true") == 0) {
-                    predicateList.add(cb.equal(root.get(fieldValuePair.getField())
-                            , Boolean.valueOf(fieldValuePair.getValue())));
-                } else {
-                    predicateList.add(cb.equal(root.get(fieldValuePair.getField())
-                            , fieldValuePair.getValue()));
-                }
-
-            }
-        }
-        log.info("Predicates {} ", predicateList);
-
-        cq.select(root).where(predicateList.toArray(new Predicate[predicateList.size()]));
-        if (searchCriteria.getOrderBy() != null && !searchCriteria.getOrderBy().isBlank()) {
-            if (isFieldPresent(fields, searchCriteria.getOrderBy())) {
-                if (searchCriteria.getSortDirection() != null
-                        && !searchCriteria.getSortDirection().isBlank()) {
-                    if (searchCriteria.getSortDirection().compareToIgnoreCase("asc") == 0) {
-                        cq.orderBy(
-                                cb.asc(root.get(searchCriteria.getOrderBy()))
-                        );
-                    } else {
-                        cq.orderBy(
-                                cb.desc(root.get(searchCriteria.getOrderBy()))
-                        );
-                    }
-                }
-
-            }
-        }
-        TypedQuery<Orders> filter = entityManager.createQuery(cq);
-        return filter.getResultList();
-    }
 
     public List genericFilter(Class c, SearchCriteria searchCriteria, String fetch) {
 
@@ -81,12 +31,14 @@ public class Filters {
         Root root = cq.from(c);
         List<Predicate> predicateList = new ArrayList<>();
         List<Field> fields = Arrays.asList(c.getDeclaredFields());
+        Fetch f = null;
 
         if (isStringValid(fetch)) {
             if (isFieldPresent(fields, fetch)) {
-                root.fetch(fetch, JoinType.INNER);
+                f = root.fetch(fetch, JoinType.INNER);
             }
         }
+
         if (searchCriteria == null) {
             return entityManager.createQuery(cq.select(root)).getResultList();
         }
@@ -115,9 +67,37 @@ public class Filters {
 
                     }
 
+                } else {
+                    log.info("Has to be nested");
+                    String parentField = isObjectInside(fields, fieldValuePair.getField());
+                    if (parentField != null) {
+                        String childField = fieldValuePair.getField().replace(parentField, "");
+                        log.info("ParentField name {} , childFieldName {}", parentField, childField);
+                        if (fieldValuePair.getOperation() != null) {
+                            if (fieldValuePair.getOperation().compareToIgnoreCase("greaterThanOrEqualTo") == 0) {
+                                predicateList.add(
+                                        cb.greaterThanOrEqualTo(root.join(parentField).get(childField), fieldValuePair.getValue())
+                                );
+                            } else if (fieldValuePair.getOperation().compareToIgnoreCase("lessThanOrEqualTo") == 0) {
+                                predicateList.add(
+                                        cb.lessThanOrEqualTo(root.join(parentField).get(childField), fieldValuePair.getValue())
+                                );
+                            }
+                        } else {
+                            log.info("Equals operation");
+                            log.info("Parent name {}", parentField);
+                            predicateList.add(
+                                    cb.equal(root.join(parentField).get(childField), fieldValuePair.getValue())
+                            );
+                        }
+
+                    }
+
                 }
             }
         }
+
+
         cq.select(root).where(predicateList.toArray(new Predicate[predicateList.size()]));
 
         log.info("Order by {} Sort dir {}", searchCriteria.getOrderBy(), searchCriteria.getSortDirection());
@@ -161,6 +141,22 @@ public class Filters {
 
     private boolean isBool(String s) {
         return s.compareToIgnoreCase("true") == 0 || s.compareToIgnoreCase("false") == 0;
+    }
+
+    /**
+     * Return field name
+     *
+     * @param existing
+     * @param name
+     * @return
+     */
+    private String isObjectInside(List<Field> existing, String name) {
+        for (Field field : existing) {
+            if (name.contains(field.getName()) && field.getName().compareToIgnoreCase("id") != 0) {
+                return field.getName();
+            }
+        }
+        return null;
     }
 
     private boolean isDirAsc(String s) {

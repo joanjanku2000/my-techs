@@ -90,13 +90,10 @@ public class Filters {
                                     cb.equal(root.join(parentField).get(childField), fieldValuePair.getValue())
                             );
                         }
-
                     }
-
                 }
             }
         }
-
 
         cq.select(root).where(predicateList.toArray(new Predicate[predicateList.size()]));
 
@@ -120,9 +117,9 @@ public class Filters {
                             cb.desc(root.get(searchCriteria.getOrderBy()))
                     );
                 }
-
             }
         }
+        cq.distinct(true);
         return entityManager.createQuery(cq).getResultList();
     }
 

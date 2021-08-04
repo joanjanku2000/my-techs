@@ -105,6 +105,18 @@ class HashTable {
         console.log("Not found");
         return false;
     }
+    keys(){
+        const keysArray = [];
+        for (let i = 0;i<this.data.length;i++){
+            if (this.data[i]){
+                for (let j=0 ; j<this.data[i].length;j++){
+                    keysArray.push(this.data[i][j].key);
+                }
+              
+            }
+        }
+        return keysArray
+    }
 }
 
 const myHashTable = new HashTable(5);
@@ -115,5 +127,6 @@ myHashTable.setAsChaining('cherries',10000);
 myHashTable.setAsChaining('luleshtrydhe',100000);
 console.log(myHashTable.data)
 console.log("Findng data with key 'luleshtrydhe' ");
- console.log(myHashTable.getFromChaining("luleshtrydhe"));
+console.log(myHashTable.getFromChaining("luleshtrydhe"));
+console.log(myHashTable.keys())
 //myHashTable.get('grapes');

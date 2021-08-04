@@ -30,6 +30,16 @@ class HashTable {
         }
         return hash;
     }
+    setAsChaining(key,value){
+        let index = this._hash(key);
+        if (!this.data[index]){
+            this.data[index] = [];
+            this.data[index].push({key,value});
+        } else {
+            this.data[index].push({key,value})
+        }
+        
+    }
     set(key,value){
         let assigned = false;
         let index = this._hash(key);
@@ -59,6 +69,20 @@ class HashTable {
         }
         return true;
     }
+    getFromChaining(key){
+        let index = this._hash(key);
+        let chained = this.data[index];
+        if (chained){
+            for (let i = 0;i<chained.length;i++){
+                if (chained[i].key === key){
+                    return chained[i];
+                }
+            }
+        }
+        
+        console.log("Not found");
+        return false;
+    }
     get (key){
         let index = this._hash(key);
         
@@ -83,13 +107,13 @@ class HashTable {
     }
 }
 
-const myHashTable = new HashTable(100);
-myHashTable.set('grapes',10);
-myHashTable.set('grapeselsrs',100);
-myHashTable.set('gsdf',1000);
-myHashTable.set('grapesedsdsflsrs',10000);
-myHashTable.set('grerwfeapeselsrs',100000);
+const myHashTable = new HashTable(5);
+myHashTable.setAsChaining('grapes',10);
+myHashTable.setAsChaining('apples',100);
+myHashTable.setAsChaining('bananas',1000);
+myHashTable.setAsChaining('cherries',10000);
+myHashTable.setAsChaining('luleshtrydhe',100000);
 console.log(myHashTable.data)
-console.log("Findng data with key 'grapes' ");
-console.log(myHashTable.get("grapes"));
+console.log("Findng data with key 'luleshtrydhe' ");
+ console.log(myHashTable.getFromChaining("luleshtrydhe"));
 //myHashTable.get('grapes');

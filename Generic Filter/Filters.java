@@ -36,6 +36,14 @@ public class Filters {
         if (isStringValid(fetch)) {
             if (isFieldPresent(fields, fetch)) {
                 f = root.fetch(fetch, JoinType.INNER);
+            } else {
+                log.info("hyn te elsi i fetchit");
+                String parentField = isObjectInside(fields, fetch);
+                if (parentField != null) {
+                    String childField = fetch.replace(parentField, "");
+                    log.info("Parent = {}, Child = {}", parentField, childField);
+                    f = root.fetch(parentField).fetch(childField);
+                }
             }
         }
 
@@ -133,7 +141,7 @@ public class Filters {
     }
 
     private boolean isStringValid(String s) {
-        return s != null && !s.isBlank();
+        return s != null && !s.isEmpty() && s.length() > 2;
     }
 
     private boolean isBool(String s) {

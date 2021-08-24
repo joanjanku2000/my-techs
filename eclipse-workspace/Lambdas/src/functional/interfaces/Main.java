@@ -118,6 +118,7 @@ public class Main {
 				});
 		
 		Map<String,String> asMap = stream2
+				.parallel() // converting to parallel stream which makes use of multithreading technology
 				.peek(q->System.out.println(String.format("%s %s\n", q[0],q[1])))
 				.collect(Collectors.toMap(q->q[0],q->q[1]));
 		

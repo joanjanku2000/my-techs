@@ -64,12 +64,16 @@ public class ExcelFile {
 		            	try {
 		            		hours = Double.parseDouble(values.get(1));
 		            		System.out.println("GOT "+hours);
-		            		desc = values.get(2);
-		            	} catch(NumberFormatException  e) {
 		            		
-		            	} catch(  IndexOutOfBoundsException e) {
+		            	} catch(NumberFormatException  |  IndexOutOfBoundsException e) {
+		            		
+		            	} 
+		            	try {
+		            		desc = values.get(2);
+		            	}catch( IndexOutOfBoundsException e) {
 		            		
 		            	}
+		            	
 		            	          
 		            	Certification certification = new Certification(values.get(0),hours != null ? hours.intValue() : null,desc);
 		            	toReturn.add(certification);

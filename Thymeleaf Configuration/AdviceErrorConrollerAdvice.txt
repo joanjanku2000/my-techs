@@ -1,0 +1,14 @@
+@Slf4j
+@ControllerAdvice
+public class RestExceptionHandler extends ResponseEntityExceptionHandler {
+    
+    @ExceptionHandler(Exception.class)
+    protected ModelAndView handleConflict(RuntimeException ex, HttpServletRequest httpServletRequest) {
+        String responseBody = ex.getMessage();
+        ModelAndView m = new ModelAndView("asigError");
+        m.addObject("error", responseBody);
+        m.addObject("url",httpServletRequest.getRequestURL());
+        return m;
+    }
+
+}

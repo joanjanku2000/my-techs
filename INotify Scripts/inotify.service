@@ -1,0 +1,10 @@
+[Unit]
+Description=bg_process
+After=syslog.target network.target
+[Service]
+Type=simple
+User=root
+ExecStart=/opt/iNotifyScript.sh
+Restart=on-abort
+[Install]
+WantedBy=multi-user.target
